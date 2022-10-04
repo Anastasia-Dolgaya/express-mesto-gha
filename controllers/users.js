@@ -14,7 +14,7 @@ module.exports.getUsers = async (req, res) => {
   try {
     const users = await User.find({});
     res.send({ data: users });
-  } catch {
+  } catch (err) {
     res.status(SERVER_ERROR_CODE).send({ message: SERVER_ERROR_MESSAGE });
   }
 };
