@@ -2,12 +2,13 @@ const Card = require('../models/cards');
 const {
   SERVER_ERROR_CODE,
   SERVER_ERROR_MESSAGE,
-  BadRequestError,
   BAD_REQUEST_CODE,
   NOT_FOUND_CODE,
-  NotFoundError,
   BAD_REQUEST_MESSAGE,
 } = require('../errors/errors');
+
+const { BadRequestError } = require('../errors/BadRequestError');
+const { NotFoundError } = require('../errors/NotFoundError');
 
 module.exports.getCards = (req, res) => {
   Card.find({})
