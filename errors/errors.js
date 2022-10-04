@@ -1,7 +1,8 @@
 const BAD_REQUEST_CODE = 400;
 const NOT_FOUND_CODE = 404;
 const SERVER_ERROR_CODE = 500;
-const SERVER_ERROR_MESSAGE = 'На сервере произошла ошибка';
+const SERVER_ERROR_MESSAGE = 'На сервере произошла ошибка.';
+const BAD_REQUEST_MESSAGE = 'Введены некорректные данные.';
 
 class NotFoundError extends Error {
   constructor(message) {
@@ -26,4 +27,5 @@ module.exports = {
   SERVER_ERROR_MESSAGE,
   NotFoundError,
   BadRequestError,
+  BAD_REQUEST_MESSAGE,
 };

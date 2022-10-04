@@ -6,6 +6,7 @@ const {
   BAD_REQUEST_CODE,
   NOT_FOUND_CODE,
   NotFoundError,
+  BAD_REQUEST_MESSAGE,
 } = require('../errors/errors');
 
 module.exports.getCards = (req, res) => {
@@ -24,7 +25,7 @@ module.exports.createCard = async (req, res) => {
     const { _id } = req.user;
 
     if (!name || !link) {
-      throw new BadRequestError('Введены неполные данные.');
+      throw new BadRequestError();
     }
 
     const card = await Card.create({
@@ -32,9 +33,9 @@ module.exports.createCard = async (req, res) => {
     });
     res.send({ data: card });
   } catch (err) {
-    if (err instanceof BadRequestError) {
+    if (err instanceof BadRequestError || err.name === 'ValidationError') {
       // 400
-      res.status(BAD_REQUEST_CODE).send({ message: err.message });
+      res.status(BAD_REQUEST_CODE).send({ message: BAD_REQUEST_MESSAGE });
     } else {
       res.status(SERVER_ERROR_CODE).send({ message: SERVER_ERROR_MESSAGE });
     }
@@ -50,6 +51,10 @@ module.exports.deleteCard = async (req, res) => {
     if (err instanceof NotFoundError) {
       // 404
       res.status(NOT_FOUND_CODE).send({ message: err.message });
+    } else if (err.name === 'CastError') {
+      // 400
+      const BadRequestErr = new BadRequestError('Передан некорректный id карточки.');
+      res.status(BAD_REQUEST_CODE).send({ message: BadRequestErr.message });
     } else {
       res.status(SERVER_ERROR_CODE).send({ message: SERVER_ERROR_MESSAGE });
     }

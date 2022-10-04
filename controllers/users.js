@@ -6,6 +6,7 @@ const {
   BAD_REQUEST_CODE,
   NOT_FOUND_CODE,
   NotFoundError,
+  BAD_REQUEST_MESSAGE,
 } = require('../errors/errors');
 
 module.exports.getUsers = async (req, res) => {
@@ -27,6 +28,10 @@ module.exports.getUser = async (req, res) => {
     if (err instanceof NotFoundError) {
       // 404
       res.status(NOT_FOUND_CODE).send({ message: err.message });
+    } else if (err.name === 'CastError') {
+      // 400
+      const BadRequestErr = new BadRequestError('Передан некорректный id пользователя.');
+      res.status(BAD_REQUEST_CODE).send({ message: BadRequestErr.message });
     } else {
       res.status(SERVER_ERROR_CODE).send({ message: SERVER_ERROR_MESSAGE });
     }
@@ -37,14 +42,14 @@ module.exports.createUser = async (req, res) => {
   try {
     const { name, about, avatar } = req.body;
     if (!name || !about || !avatar) {
-      throw new BadRequestError('Введены неполные данные.');
+      throw new BadRequestError();
     }
     const user = await User.create({ name, about, avatar });
     res.send({ data: user });
   } catch (err) {
-    if (err instanceof BadRequestError) {
+    if (err instanceof BadRequestError || err.name === 'ValidationError') {
       // 400
-      res.status(BAD_REQUEST_CODE).send({ message: err.message });
+      res.status(BAD_REQUEST_CODE).send({ message: BAD_REQUEST_MESSAGE });
     } else {
       res.status(SERVER_ERROR_CODE).send({ message: SERVER_ERROR_MESSAGE });
     }
