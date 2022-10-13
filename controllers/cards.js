@@ -1,7 +1,5 @@
 const Card = require('../models/cards');
 const {
-  SERVER_ERROR_CODE,
-  SERVER_ERROR_MESSAGE,
   BAD_REQUEST_CODE,
   NOT_FOUND_CODE,
   BAD_REQUEST_MESSAGE,
@@ -9,15 +7,16 @@ const {
 
 const { BadRequestError } = require('../errors/BadRequestError');
 const { NotFoundError } = require('../errors/NotFoundError');
+const { ConflictError } = require('../errors/ConflictError');
 
-module.exports.getCards = (req, res) => {
+module.exports.getCards = (req, res, next) => {
   Card.find({})
     .populate('owner')
     .then((cards) => res.send({ data: cards }))
-    .catch((err) => res.status(500).send({ message: err.message }));
+    .catch(next);
 };
 
-module.exports.createCard = async (req, res) => {
+module.exports.createCard = async (req, res, next) => {
   try {
     const {
       name, link,
@@ -25,9 +24,9 @@ module.exports.createCard = async (req, res) => {
 
     const { _id } = req.user;
 
-    if (!name || !link) {
-      throw new BadRequestError();
-    }
+    // if (!name || !link) {
+    //   throw new BadRequestError();
+    // }
 
     const card = await Card.create({
       name, link, owner: _id,
@@ -38,16 +37,22 @@ module.exports.createCard = async (req, res) => {
       // 400
       res.status(BAD_REQUEST_CODE).send({ message: BAD_REQUEST_MESSAGE });
     } else {
-      res.status(SERVER_ERROR_CODE).send({ message: SERVER_ERROR_MESSAGE });
+      next(err);
     }
   }
 };
 
-module.exports.deleteCard = async (req, res) => {
+module.exports.deleteCard = async (req, res, next) => {
   try {
-    const card = await Card.findByIdAndRemove(req.params.cardId)
+    const card = await Card.findById(req.params.cardId)
       .orFail(new NotFoundError('Карточка не найдена.'));
-    res.send({ data: card });
+
+    if (card.owner._id.toString() !== req.user._id) {
+      throw new ConflictError('Пользователь не имеет прав на удаления чужой карточки.');
+    }
+
+    await card.delete();
+    res.send({ message: 'Карточка удалена.' });
   } catch (err) {
     if (err instanceof NotFoundError) {
       // 404
@@ -57,12 +62,12 @@ module.exports.deleteCard = async (req, res) => {
       const BadRequestErr = new BadRequestError('Передан некорректный id карточки.');
       res.status(BAD_REQUEST_CODE).send({ message: BadRequestErr.message });
     } else {
-      res.status(SERVER_ERROR_CODE).send({ message: SERVER_ERROR_MESSAGE });
+      next(err);
     }
   }
 };
 
-module.exports.likeCard = async (req, res) => {
+module.exports.likeCard = async (req, res, next) => {
   try {
     const card = await Card.findByIdAndUpdate(
       req.params.cardId,
@@ -79,12 +84,12 @@ module.exports.likeCard = async (req, res) => {
       const BadRequestErr = new BadRequestError('Переданы некорректные данные для постановки лайка.');
       res.status(BAD_REQUEST_CODE).send({ message: BadRequestErr.message });
     } else {
-      res.status(SERVER_ERROR_CODE).send({ message: SERVER_ERROR_MESSAGE });
+      next(err);
     }
   }
 };
 
-module.exports.dislikeCard = async (req, res) => {
+module.exports.dislikeCard = async (req, res, next) => {
   try {
     const card = await Card.findByIdAndUpdate(
       req.params.cardId,
@@ -101,7 +106,7 @@ module.exports.dislikeCard = async (req, res) => {
       const BadRequestErr = new BadRequestError('Переданы некорректные данные для снятия лайка.');
       res.status(BAD_REQUEST_CODE).send({ message: BadRequestErr.message });
     } else {
-      res.status(SERVER_ERROR_CODE).send({ message: SERVER_ERROR_MESSAGE });
+      next(err);
     }
   }
 };
