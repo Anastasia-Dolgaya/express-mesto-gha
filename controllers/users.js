@@ -65,13 +65,13 @@ module.exports.createUser = async (req, res, next) => {
 
     const hash = await bcrypt.hash(password, 10);
 
-    const newUser = await User.create({
+    await User.create({
       email, password: hash, name, about, avatar,
     });
 
     res.send({
       data: {
-        newUser,
+        email, name, about, avatar,
       },
     });
   } catch (err) {
@@ -105,6 +105,7 @@ module.exports.login = (req, res, next) => {
           httpOnly: true,
           sameSite: true,
         })
+        .json({ token })
         .end();
     })
     .catch(next);

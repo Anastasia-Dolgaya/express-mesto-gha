@@ -1,5 +1,6 @@
 const BAD_REQUEST_CODE = 400;
 const AUTH_ERROR_CODE = 401;
+const FORBIDDEN_CODE = 403;
 const NOT_FOUND_CODE = 404;
 const CONFLICT_CODE = 409;
 const SERVER_ERROR_CODE = 500;
@@ -9,6 +10,7 @@ const BAD_REQUEST_MESSAGE = 'Введены некорректные данны�
 module.exports = {
   BAD_REQUEST_CODE,
   AUTH_ERROR_CODE,
+  FORBIDDEN_CODE,
   NOT_FOUND_CODE,
   CONFLICT_CODE,
   SERVER_ERROR_CODE,

@@ -2,8 +2,8 @@ const Card = require('../models/cards');
 
 const { BadRequestError } = require('../errors/BadRequestError');
 const { NotFoundError } = require('../errors/NotFoundError');
-const { ConflictError } = require('../errors/ConflictError');
 const { ValidationError } = require('../errors/ValidationError');
+const { ForbiddenError } = require('../errors/ForbiddenError');
 
 module.exports.getCards = (req, res, next) => {
   Card.find({})
@@ -40,7 +40,7 @@ module.exports.deleteCard = async (req, res, next) => {
       .orFail(new NotFoundError('Карточка не найдена.'));
 
     if (card.owner._id.toString() !== req.user._id) {
-      throw new ConflictError('Пользователь не имеет прав на удаления чужой карточки.');
+      throw new ForbiddenError('Пользователь не имеет прав на удаления чужой карточки.');
     }
 
     await card.delete();

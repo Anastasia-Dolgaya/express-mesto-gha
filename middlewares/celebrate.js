@@ -1,18 +1,19 @@
 const { celebrate, Joi } = require('celebrate');
+const { regexp } = require('../utils/constants');
 
 module.exports.validateNewUser = celebrate({
   body: Joi.object().keys({
-    email: Joi.string().required(),
+    email: Joi.string().required().email(),
     password: Joi.string().required().min(8),
     name: Joi.string().min(2).max(30),
     about: Joi.string().min(2).max(30),
-    avatar: Joi.string(),
+    avatar: Joi.string().pattern(regexp),
   }),
 });
 
 module.exports.validateSignin = celebrate({
   body: Joi.object().keys({
-    email: Joi.string().required(),
+    email: Joi.string().required().email(),
     password: Joi.string().required().min(8),
   }),
 });
@@ -32,14 +33,14 @@ module.exports.validateAvatarUpdate = celebrate({
 
 module.exports.validateUserID = celebrate({
   params: Joi.object().keys({
-    UserId: Joi.string().alphanum().length(24),
+    userId: Joi.string(),
   }),
 });
 
 module.exports.validateNewCard = celebrate({
   body: Joi.object().keys({
     name: Joi.string().required().min(2).max(30),
-    link: Joi.string().required(),
+    link: Joi.string().required().pattern(regexp),
   }),
 });
 

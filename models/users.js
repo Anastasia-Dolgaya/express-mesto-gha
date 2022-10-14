@@ -2,8 +2,7 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const validator = require('validator');
 const { AuthError } = require('../errors/AuthError');
-
-const regexp = /^(https?:\/\/)?([\w]{1,32})\.[\w]{1,32}[^]*$/gi;
+const { regexp } = require('../utils/constants');
 
 const userSchema = new mongoose.Schema({
   email: {
