@@ -27,13 +27,13 @@ module.exports.validateUserUpdate = celebrate({
 
 module.exports.validateAvatarUpdate = celebrate({
   body: Joi.object().keys({
-    avatar: Joi.string(),
+    avatar: Joi.string().pattern(regexp),
   }),
 });
 
 module.exports.validateUserID = celebrate({
   params: Joi.object().keys({
-    userId: Joi.string(),
+    userId: Joi.string().alphanum().length(24),
   }),
 });
 
