@@ -1,14 +1,7 @@
 require('dotenv').config();
-const validator = require('validator');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/users');
-
-const {
-  BAD_REQUEST_CODE,
-  NOT_FOUND_CODE,
-  BAD_REQUEST_MESSAGE,
-} = require('../errors/errors');
 
 const { NODE_ENV, JWT_SECRET } = process.env;
 
@@ -29,17 +22,14 @@ module.exports.getUsers = async (req, res, next) => {
 module.exports.getUser = async (req, res, next) => {
   try {
     const user = await User.findById(req.params.userId)
+      // 404
       .orFail(new NotFoundError('Пользователь не найден.'));
 
     res.send({ data: user });
   } catch (err) {
-    if (err instanceof NotFoundError) {
-      // 404
-      res.status(NOT_FOUND_CODE).send({ message: err.message });
-    } else if (err.name === 'CastError') {
+    if (err.name === 'CastError') {
       // 400
-      const BadRequestErr = new BadRequestError('Передан некорректный id пользователя.');
-      res.status(BAD_REQUEST_CODE).send({ message: BadRequestErr.message });
+      next(new BadRequestError('Передан некорректный id пользователя.'));
     } else {
       next(err);
     }
@@ -49,16 +39,13 @@ module.exports.getUser = async (req, res, next) => {
 module.exports.getMyInfo = async (req, res, next) => {
   try {
     const user = await User.findOne(req.user)
+      // 404
       .orFail(new NotFoundError('Пользователь не найден.'));
     res.send({ data: user });
   } catch (err) {
-    if (err instanceof NotFoundError) {
-      // 404
-      res.status(NOT_FOUND_CODE).send({ message: err.message });
-    } else if (err.name === 'CastError') {
+    if (err.name === 'CastError') {
       // 400
-      const BadRequestErr = new BadRequestError('Передан некорректный id пользователя.');
-      res.status(BAD_REQUEST_CODE).send({ message: BadRequestErr.message });
+      next(new BadRequestError('Передан некорректный id пользователя.'));
     } else {
       next(err);
     }
@@ -71,34 +58,29 @@ module.exports.createUser = async (req, res, next) => {
       email, password, name, about, avatar,
     } = req.body;
 
-    // if (!email || !password) {
-    //   throw new BadRequestError();
-    // }
-
-    if (!validator.isEmail(email)) {
-      throw new ValidationError('Введите валидный email');
-    }
-
-    const dublicate = await User.find({ email });
-    if (dublicate.length > 0) {
+    const user = await User.find({ email });
+    if (user.length > 0) {
       throw new ConflictError('Пользователь с таким email уже существует');
     }
 
     const hash = await bcrypt.hash(password, 10);
 
-    await User.create({
+    const newUser = await User.create({
       email, password: hash, name, about, avatar,
     });
 
     res.send({
       data: {
-        email, name, about, avatar,
+        newUser,
       },
     });
   } catch (err) {
-    if (err instanceof BadRequestError || err.name === 'ValidationError') {
+    if (err.name === 'ValidationError') {
       // 400
-      res.status(BAD_REQUEST_CODE).send({ message: BAD_REQUEST_MESSAGE });
+      next(new ValidationError('Введены невалидные данные'));
+    } else if (err.code === 11000) {
+      // 409
+      next(new ConflictError('Пользователь с таким email уже существует'));
     } else {
       next(err);
     }
@@ -132,27 +114,16 @@ module.exports.updateUser = async (req, res, next) => {
   try {
     const { name, about } = req.body;
 
-    // if (!name || !about) {
-    //   throw new BadRequestError('Не указано имя пользователя или описание.');
-    // }
-
     const user = await User.findByIdAndUpdate(req.user, { name, about }, {
       new: true,
       runValidators: true,
     })
+      // 404
       .orFail(new NotFoundError('Пользователь не найден.'));
 
     res.send({ data: user });
   } catch (err) {
-    if (err instanceof BadRequestError) {
-      // 400
-      res.status(BAD_REQUEST_CODE).send({ message: err.message });
-    } else if (err instanceof NotFoundError) {
-      // 404
-      res.status(NOT_FOUND_CODE).send({ message: err.message });
-    } else {
-      next(err);
-    }
+    next(err);
   }
 };
 
@@ -160,24 +131,18 @@ module.exports.updateAvatar = async (req, res, next) => {
   try {
     const { avatar } = req.body;
 
-    // if (!avatar) {
-    //   throw new BadRequestError('Не указана ссылка на аватар пользователя.');
-    // }
-
     const user = await User.findByIdAndUpdate(req.user, { avatar }, {
       new: true,
       runValidators: true,
     })
+      // 404
       .orFail(new NotFoundError('Пользователь не найден.'));
 
     res.send({ data: user });
   } catch (err) {
-    if (err instanceof BadRequestError || err.name === 'ValidationError') {
+    if (err.name === 'ValidationError') {
       // 400
-      res.status(BAD_REQUEST_CODE).send({ message: err.message });
-    } else if (err instanceof NotFoundError) {
-      // 404
-      res.status(NOT_FOUND_CODE).send({ message: err.message });
+      next(new ValidationError('Введены невалидные данные'));
     } else {
       next(err);
     }

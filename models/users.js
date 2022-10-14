@@ -1,14 +1,24 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
+const validator = require('validator');
 const { AuthError } = require('../errors/AuthError');
 
-const regexp = /^(https?:\/\/)?([\w]{1,32)\.[\w]{1,32}[^]*$/;
+const regexp = /^(https?:\/\/)?([\w]{1,32})\.[\w]{1,32}[^]*$/gi;
 
 const userSchema = new mongoose.Schema({
   email: {
     type: String,
     required: true,
     unique: true,
+    minlength: 2,
+    validate: {
+      validator: (v) => {
+        if (!validator.isEmail(v)) {
+          return false;
+        }
+        return v;
+      },
+    },
   },
   password: {
     type: String,
