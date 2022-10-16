@@ -1,5 +1,5 @@
-const { NOT_FOUND_CODE } = require('../errors/errors');
+const { NotFoundError } = require('../errors/NotFoundError');
 
-module.exports.notFoundController = (req, res) => {
-  res.status(NOT_FOUND_CODE).send({ message: 'Страница не найдена' });
+module.exports.notFoundController = (req, res, next) => {
+  next(new NotFoundError('Страница не найдена'));
 };

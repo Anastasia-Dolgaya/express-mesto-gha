@@ -54,14 +54,10 @@ module.exports.getMyInfo = async (req, res, next) => {
 
 module.exports.createUser = async (req, res, next) => {
   try {
+    console.dir(req.body);
     const {
       email, password, name, about, avatar,
     } = req.body;
-
-    const user = await User.find({ email });
-    if (user.length > 0) {
-      throw new ConflictError('Пользователь с таким email уже существует');
-    }
 
     const hash = await bcrypt.hash(password, 10);
 
@@ -75,12 +71,13 @@ module.exports.createUser = async (req, res, next) => {
       },
     });
   } catch (err) {
-    if (err.name === 'ValidationError') {
-      // 400
-      next(new ValidationError('Введены невалидные данные'));
-    } else if (err.code === 11000) {
+    console.dir(err);
+    if (err.code === 11000) {
       // 409
       next(new ConflictError('Пользователь с таким email уже существует'));
+    } else if (err.name === 'ValidationError') {
+      // 400
+      next(new ValidationError('Введены невалидные данные'));
     } else {
       next(err);
     }
