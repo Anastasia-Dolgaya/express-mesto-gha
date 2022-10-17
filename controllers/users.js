@@ -54,24 +54,22 @@ module.exports.getMyInfo = async (req, res, next) => {
 
 module.exports.createUser = async (req, res, next) => {
   try {
-    console.dir(req.body);
     const {
       email, password, name, about, avatar,
     } = req.body;
 
     const hash = await bcrypt.hash(password, 10);
 
-    await User.create({
+    const user = await User.create({
       email, password: hash, name, about, avatar,
     });
 
+    user.password = undefined;
+
     res.send({
-      data: {
-        email, name, about, avatar,
-      },
+      user,
     });
   } catch (err) {
-    console.dir(err);
     if (err.code === 11000) {
       // 409
       next(new ConflictError('Пользователь с таким email уже существует'));
@@ -144,5 +142,14 @@ module.exports.updateAvatar = async (req, res, next) => {
     } else {
       next(err);
     }
+  }
+};
+
+module.exports.logout = (req, res, next) => {
+  try {
+    res.clearCookie('jwt')
+      .send({ message: 'Выход' });
+  } catch (err) {
+    next(err);
   }
 };

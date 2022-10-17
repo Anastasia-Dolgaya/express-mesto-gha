@@ -3,34 +3,35 @@ const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 const { errors } = require('celebrate');
-const auth = require('./middlewares/auth');
-const { login, createUser } = require('./controllers/users');
-const { notFoundController } = require('./controllers/notFoundController');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 const errorsHandler = require('./middlewares/errorsHandler');
-const { validateNewUser, validateSignin } = require('./middlewares/celebrate');
+const { router } = require('./routes/index');
 
 const { PORT = 3000 } = process.env;
 
 const app = express();
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+});
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 app.use(cookieParser());
 
+app.use(helmet());
+
+app.use(limiter);
+
 mongoose.connect('mongodb://localhost:27017/mestodb', {
   useNewUrlParser: true,
 });
 
-app.post('/signin', validateSignin, login);
-app.post('/signup', validateNewUser, createUser);
+app.use(router);
 
-app.use(auth);
-
-app.use('/users', require('./routes/users'));
-app.use('/cards', require('./routes/cards'));
-
-app.use('*', notFoundController);
 app.use(errors());
 app.use(errorsHandler);
 
